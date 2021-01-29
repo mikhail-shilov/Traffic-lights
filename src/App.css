@@ -36,3 +36,14 @@
     transform: rotate(360deg);
   }
 }
+
+.light {
+  background-color: yellow;
+  height: 96px;
+  width: 96px;
+}
+
+.active {
+  background-color: orange;
+
+}
