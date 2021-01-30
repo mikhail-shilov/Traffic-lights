@@ -1,84 +1,64 @@
 import './App.css';
 import {useState, useEffect} from "react";
-import Light from "./components/light";
-import {BrowserRouter, useHistory} from "react-router-dom";
+import Light from "./components/Light";
+
+import {useHistory, useLocation} from "react-router-dom";
 
 
 function App() {
-    const [model, setModel] = useState({
-        lightsFull: [
-            {type: 'deny', isActive: true, interval: 5000},
-            {type: 'alert', isActive: false, interval: 5000},
-            {type: 'allow', isActive: false, interval: 5000},
-        ],
-        isForward: false,
-        isEnabled: true
-    });
+    // /yellow?interval=30&forward=true
 
-    const lights = model.lightsFull.map((light, index) => {
-        return <Light key={index} type={light.type} isActive={light.isActive} interval={light.interval}>
-            {light.toString()}
-        </Light>
-//        return <div key={index} className={light ? `light light--active` : `light`}>{light.toString()}</div>
-    })
-    const lightUpdater = (model) => {
-        if (model.isEnabled) {
-            let lightsFull = [...model.lightsFull];
-            let direction = model.isForward;
+    const history = useHistory();
+    const location = useLocation();
 
-            const activeLight = lightsFull.findIndex(item => {
-                return item.isActive
-            });
+    const trafficLights = [
+        {type: 'red', interval: 10000},
+        {type: 'yellow', interval: 3000},
+        {type: 'green', interval: 15000},
+    ];
 
-            //lightsFull[activeLight].isActive = false;
-            lightsFull[activeLight] = {...lightsFull[activeLight], isActive: false};
-            if (activeLight === lightsFull.length - 1 || activeLight === 0) {
-                direction = !direction;
+    const [forward, setForward] = useState(true);
 
-            }
-            //lightsFull[activeLight + (direction ? 1 : -1)].isActive = true;
-            lightsFull[activeLight + (direction ? 1 : -1)] = {
-                ...lightsFull[activeLight + (direction ? 1 : -1)],
-                isActive: true
-            };
 
-            console.log(model);
+    const getNextLight = () => {
+        let direction = forward;
+        const activeType = location.pathname.slice(1);
+        const activeIndex = trafficLights.findIndex(elem => elem.type === activeType);
+        if (activeIndex === 0) direction = true;
+        if (activeIndex === trafficLights.length - 1) direction = false;
+        const interval = trafficLights[activeIndex].interval;
+        const nextType = trafficLights[activeIndex + (direction ? 1 : -1)].type;
+        setForward(direction);
+        setTimeout(() => {
+            history.replace(nextType);
+        }, interval);
 
-            return {...model, lightsFull: lightsFull, isForward: direction};
-        }
-        return model;
+
     }
-
-    const toggleSwitch = () => {
-        setModel({...model, isEnabled: !model.isEnabled});
-        return 0;
-    }
-
+    //getNextLight();
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            setModel(model => lightUpdater(model));
-        }, 1000);
-        return () => clearInterval(interval);
-    }, []);
+        getNextLight();
+    }, [location.pathname]);
 
 
+    const lightsComponents = trafficLights.map((light, index) => {
+        return (
+            <Light
+                key={index}
+                type={light.type}
+                isActive={light.type === location.pathname.slice(1)}
+                interval={light.interval}
+                switchHandler={null}
+            />
+        )
+    })
 
-    const ToggleWTF = () => {
-
-    }
 
     return (
-        <BrowserRouter>
-            <div className="App">
-
-                <button onClick={() => setModel(model => lightUpdater(model))}>Switch</button>
-                <button onClick={toggleSwitch}>{model.isEnabled ? `Off` : `On`}</button>
-                <button onClick={ToggleWTF}>WTF</button>
-
-                {lights}
-            </div>
-        </BrowserRouter>
+        <main className="App">
+            <div className={"traffic-light"}>{lightsComponents}</div>
+        </main>
     );
 }
 
