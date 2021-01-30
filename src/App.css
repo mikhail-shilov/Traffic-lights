@@ -41,9 +41,23 @@
   background-color: yellow;
   height: 96px;
   width: 96px;
+  opacity: 0.22;
 }
 
-.active {
-  background-color: orange;
+.light--deny {
+  background-color: red;
+}
+
+.light--alert {
+  background-color: yellow;
+}
+
+.light--allow {
+  background-color: green;
+}
+
+.light--active {
+  opacity: 1;
+
 
 }
