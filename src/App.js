@@ -1,57 +1,73 @@
-import './App.css';
-import {useState, useEffect} from "react";
-import Light from "./components/Light";
-
+import {useState, useEffect, useCallback} from "react";
 import {useHistory, useLocation} from "react-router-dom";
-
+import {getCookie} from "./Tools/getCookie";
+import './App.css';
+import Light from "./components/Light";
 
 function App() {
     const history = useHistory();
     const location = useLocation();
 
-    const trafficLights = [
-        {type: 'red', interval: 10000},
-        {type: 'yellow', interval: 3000},
-        {type: 'green', interval: 15000},
-    ];
+    const [trafficLights] = useState([
+        {type: 'red', interval: 10},
+        {type: 'yellow', interval: 3},
+        {type: 'green', interval: 15},
+    ])
+    const [isForward, setForward] = useState(true);
+    const [activeMode, setMode] = useState();
+    const [counter, setCounter] = useState();
 
-    const [forward, setForward] = useState(true);
+    //Location parser (get state from url and read counter from cookie if page are reload)
+    useEffect(() => {
+        const path = location.pathname.slice(1);
+        const modeIndex = trafficLights.findIndex(elem => elem.type === path);
+        if (modeIndex === -1) {
+            history.replace('red');
+        } else {
+            setMode(modeIndex);
+            if (typeof activeMode === "undefined" && path === getCookie('light')) {
+                setCounter(parseInt(getCookie('counter')));
+            } else {
+                setCounter(trafficLights[modeIndex].interval);
+            }
+        }
+    }, [location.pathname, trafficLights, history]);
 
-
-    const getNextLight = () => {
-        let direction = forward;
-        const activeType = location.pathname.slice(1);
-        const activeIndex = trafficLights.findIndex(elem => elem.type === activeType);
+    //URL switcher
+    const switchLight = useCallback(() => {
+        let direction = isForward;
+        const activeIndex = activeMode;
         if (activeIndex === 0) direction = true;
         if (activeIndex === trafficLights.length - 1) direction = false;
-        const interval = trafficLights[activeIndex].interval;
-        const nextType = trafficLights[activeIndex + (direction ? 1 : -1)].type;
+        const nextMode = trafficLights[activeIndex + (direction ? 1 : -1)].type;
         setForward(direction);
-        setTimeout(() => {
-            history.replace(nextType);
-        }, interval);
+        history.replace(nextMode);
+    }, [activeMode, history, isForward, trafficLights])
 
-
-    }
-    //getNextLight();
-
+    //Rotate handlers
     useEffect(() => {
-        getNextLight();
-    }, [location.pathname]);
+        const interval = setInterval(() => {
+            setCounter(counter => counter - 1);
+        }, 1000);
+        return () => clearInterval(interval);
+    }, []);
+    useEffect(() => {
+        if (counter === 0) switchLight();
+    }, [counter, switchLight]);
 
+    //StateToCookie writer
+    useEffect(() => {
+        document.cookie = `light=${location.pathname.slice(1)}`;
+        document.cookie = `counter=${counter}`;
+    }, [counter, location.pathname])
 
-    const lightsComponents = trafficLights.map((light, index) => {
-        return (
-            <Light
-                key={index}
-                type={light.type}
-                isActive={light.type === location.pathname.slice(1)}
-                interval={light.interval}
-                switchHandler={null}
-            />
-        )
-    })
-
+    //Array of lights
+    const lightsComponents = trafficLights.map((light, index) => <Light
+        key={index}
+        type={light.type}
+        isActive={index === activeMode} //location.pathname.slice(1)
+        counter={counter}/>
+    )
 
     return (
         <main className="App">
