@@ -6,8 +6,6 @@ import {useHistory, useLocation} from "react-router-dom";
 
 
 function App() {
-    // /yellow?interval=30&forward=true
-
     const history = useHistory();
     const location = useLocation();
 
