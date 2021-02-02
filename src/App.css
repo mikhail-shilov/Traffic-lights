@@ -27,6 +27,9 @@
   align-items: center;
   font-size: 48px;
   color: #000;
+  transition-property: all;
+  transition-duration: 300ms;
+
 }
 .light + .light {
   margin-top: 5px;

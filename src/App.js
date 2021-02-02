@@ -22,7 +22,7 @@ function App() {
         const path = location.pathname.slice(1);
         const modeIndex = trafficLights.findIndex(elem => elem.type === path);
         if (modeIndex === -1) {
-            history.replace('red');
+            history.replace(trafficLights[0].type);
         } else {
             setMode(modeIndex);
             if (typeof activeMode === "undefined" && path === getCookie('light')) {
